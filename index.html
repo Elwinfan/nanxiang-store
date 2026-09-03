@@ -1,0 +1,1119 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>力诚食品南香门店管理系统</title>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 8px;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .mobile-container { max-width: 600px; margin: 0 auto; }
+
+        /* ==================== 顶部标题栏 ==================== */
+        .mobile-header {
+            text-align: center;
+            color: white;
+            padding: 15px 10px;
+            margin-bottom: 15px;
+        }
+
+        .mobile-header h1 {
+            font-size: 1.6rem;
+            font-weight: bold;
+            margin-bottom: 6px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .mobile-header p { font-size: 0.85rem; opacity: 0.9; }
+
+        /* ==================== 统计卡片区 ==================== */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 15px 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .stat-card .label {
+            color: #666;
+            font-size: 0.8rem;
+            margin-bottom: 8px;
+        }
+
+        .stat-card .value { font-size: 1.4rem; font-weight: bold; }
+        .stat-card.sales .value { color: #667eea; }
+        .stat-card.stores .value { color: #11998e; }
+        .stat-card.photos .value { color: #9b59b6; }
+        .stat-card.month .value { color: #7f8c8d; }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: #ecf0f1;
+            border-radius: 3px;
+            margin-top: 8px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            transition: width 0.3s;
+        }
+
+        /* ==================== 卡片通用 ==================== */
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .card h2 {
+            color: #333;
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+        }
+
+        /* ==================== 导出按钮栏（一排两个） ==================== */
+        .export-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .btn-export {
+            flex: 1;
+            padding: 12px;
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            min-height: 44px;
+        }
+
+        .btn-export:active { transform: scale(0.98); }
+
+        /* ==================== 表单 ==================== */
+        .form-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .form-row .form-group { flex: 1; margin-bottom: 0; }
+
+        .form-group { margin-bottom: 15px; }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            color: #555;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        .form-group select,
+        .form-group input {
+            width: 100%;
+            padding: 14px 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+            min-height: 44px;
+        }
+
+        .form-group select:focus,
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-group input.error { border-color: #e74c3c; }
+
+        .amount-hint {
+            font-size: 0.85rem;
+            color: #11998e;
+            font-weight: 600;
+            min-height: 1.2em;
+            margin-top: 6px;
+        }
+
+        .btn-primary {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            min-height: 52px;
+        }
+
+        .btn-primary:active { transform: scale(0.98); }
+
+        .btn-danger-small {
+            padding: 10px 16px;
+            background: #ffebee;
+            color: #c62828;
+            border: 1px solid #ffcdd2;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            min-height: 40px;
+            width: 100%;
+        }
+
+        /* ==================== 照片区 ==================== */
+        .upload-area {
+            border: 2px dashed #667eea;
+            border-radius: 8px;
+            padding: 30px 20px;
+            text-align: center;
+            cursor: pointer;
+            margin-bottom: 15px;
+        }
+
+        .upload-area:active { background: #f0f7ff; }
+        .upload-area.dragover { background: #e3f2fd; border-color: #2196f3; }
+        .upload-area p { color: #333; font-size: 0.95rem; }
+        .upload-area small { color: #999; font-size: 0.8rem; }
+
+        .photo-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .photo-item {
+            position: relative;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            overflow: hidden;
+            aspect-ratio: 1;
+        }
+
+        .photo-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .photo-item .photo-info {
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 4px;
+            font-size: 0.7rem;
+            text-align: center;
+        }
+
+        .photo-item .btn-delete-photo {
+            position: absolute;
+            top: 4px; right: 4px;
+            background: #ff4757;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 24px; height: 24px;
+            cursor: pointer;
+            font-size: 0.75rem;
+        }
+
+        .photo-select {
+            position: absolute;
+            top: 4px; left: 4px;
+            width: 20px; height: 20px;
+            z-index: 10;
+        }
+
+        /* ==================== 全屏看图（lightbox） ==================== */
+        .lightbox {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.92);
+            z-index: 2000;
+            overflow: hidden;
+            touch-action: none;
+        }
+
+        .lightbox.open { display: flex; align-items: center; justify-content: center; }
+
+        .lightbox img {
+            max-width: 100vw;
+            max-height: 100vh;
+            object-fit: contain;
+            transform-origin: center center;
+            transition: transform 0.2s;
+            user-select: none;
+            -webkit-user-drag: none;
+        }
+
+        .lightbox img.dragging { transition: none; }
+
+        .lightbox-close {
+            position: absolute;
+            top: 12px; right: 12px;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px; height: 40px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            z-index: 2001;
+        }
+
+        .lightbox-tip {
+            position: absolute;
+            bottom: 16px; left: 0; right: 0;
+            text-align: center;
+            color: rgba(255,255,255,0.5);
+            font-size: 0.75rem;
+        }
+
+        .batch-actions { display: flex; gap: 10px; }
+
+        .btn-batch {
+            flex: 1;
+            padding: 12px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            min-height: 44px;
+        }
+
+        /* ==================== Toast ==================== */
+        .toast {
+            position: fixed;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 16px 24px;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            z-index: 1000;
+            animation: fadeIn 0.3s;
+        }
+
+        .toast.success { background: rgba(17, 153, 142, 0.9); }
+        .toast.error { background: rgba(231, 76, 60, 0.9); }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ==================== 底部 ==================== */
+        .mobile-footer {
+            text-align: center;
+            color: rgba(255, 255, 255, 0.6);
+            padding: 15px 10px;
+            font-size: 0.75rem;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="mobile-container">
+        <header class="mobile-header">
+            <h1>南香门店管理系统（力诚）</h1>
+            <p>拍照记金额一步搞定 · 金额自动换算（÷0.98）· 同店同月累加</p>
+        </header>
+
+        <!-- 统计卡片 -->
+        <section class="stats-grid">
+            <div class="stat-card sales">
+                <div class="label">💰 本月销售总额</div>
+                <div class="value" id="totalSales">¥0.00</div>
+            </div>
+            <div class="stat-card stores">
+                <div class="label">🏪 已录入门店</div>
+                <div class="value" id="storeCount">0/17</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="storeProgress" style="width: 0%"></div>
+                </div>
+            </div>
+            <div class="stat-card photos">
+                <div class="label">📷 照片总数</div>
+                <div class="value" id="photoCount">0</div>
+            </div>
+            <div class="stat-card month">
+                <div class="label">📅 当前月份</div>
+                <div class="value" id="currentMonth">-</div>
+            </div>
+        </section>
+
+        <main>
+            <!-- 录入卡片：月份+门店+金额+照片 -->
+            <div class="card">
+                <h2>📝 巡店录入</h2>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>月份</label>
+                        <input type="month" id="recordMonth">
+                    </div>
+                    <div class="form-group">
+                        <label>门店</label>
+                        <select id="storeName">
+                            <option value="">请选择门店</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>实际销售金额(元)</label>
+                    <input type="number" id="salesAmount" min="0" step="0.01" placeholder="填原始金额，自动换算" oninput="updateAmountHint()">
+                    <div class="amount-hint" id="amountHint"></div>
+                </div>
+
+                <div class="form-group">
+                    <label>备注（可选）</label>
+                    <input type="text" id="remark" placeholder="选填">
+                </div>
+
+                <div class="upload-area" id="uploadArea" onclick="document.getElementById('photoInput').click()">
+                    <p>📷 点击上传照片（可选）</p>
+                    <small>支持 JPG、PNG，可多选</small>
+                </div>
+                <input type="file" id="photoInput" accept="image/*" multiple style="display: none;" onchange="onPhotoPicked(event)">
+                <div id="pendingPhotos" class="photo-grid" style="display: none;"></div>
+
+                <button type="button" class="btn-primary" onclick="submitEntry()">提交</button>
+                <button type="button" class="btn-danger-small" style="margin-top: 15px;" onclick="clearAllMonthData()">
+                    清空本月全部数据与照片
+                </button>
+            </div>
+
+            <!-- 本店照片 -->
+            <div class="card">
+                <h2>📸 本店已传照片</h2>
+                <div style="margin-bottom: 10px;">
+                    <label style="font-size: 0.85rem; color: #666;">
+                        <input type="checkbox" id="selectAll" onchange="toggleSelectAll()" style="margin-right: 6px;">全选
+                    </label>
+                </div>
+                <div id="photoGrid" class="photo-grid"></div>
+                <div class="batch-actions">
+                    <button class="btn-batch" onclick="batchDownload()">⬇️ 下载选中</button>
+                    <button class="btn-batch" onclick="batchDelete()" style="background: #ff4757;">🗑️ 删除选中</button>
+                </div>
+            </div>
+
+            <!-- 导出一排两个 -->
+            <div class="export-bar">
+                <button class="btn-export" onclick="exportExcel()">📊 导出Excel</button>
+                <button class="btn-export" onclick="exportZip()">📦 导出照片ZIP</button>
+            </div>
+
+            <!-- 备份（小字） -->
+            <div class="card" style="padding: 15px;">
+                <p style="font-size:0.8rem;color:#888;margin-bottom:10px;">💾 数据备份：清缓存/换手机前先导出，可再导入恢复</p>
+                <div class="export-bar" style="margin-bottom: 0;">
+                    <button class="btn-batch" style="background:#95a5a6;flex:1;" onclick="exportBackup()">📤 导出备份</button>
+                    <button class="btn-batch" style="background:#95a5a6;flex:1;" onclick="document.getElementById('backupInput').click()">📥 导入备份</button>
+                    <input type="file" id="backupInput" accept=".json" style="display:none;" onchange="importBackup(event)">
+                </div>
+            </div>
+        </main>
+
+        <footer class="mobile-footer">@何飞饭</footer>
+    </div>
+
+    <!-- 全屏看图 -->
+    <div class="lightbox" id="lightbox">
+        <button class="lightbox-close" onclick="closeLightbox()">×</button>
+        <img id="lightboxImg" src="" alt="大图">
+        <div class="lightbox-tip">双击缩放 · 双指捏合 · 点空白处关闭</div>
+    </div>
+
+    <script>
+        // ==================== 门店数据 ====================
+        const STORES = [
+            { name: '金井店', contact: '张店长', phone: '13860756391', address: '晋江市中心路238南香商厦F1层', display: '1层.7格', quantity: '18支' },
+            { name: '英林店', contact: '陈店长', phone: '13959759529', address: '福建省泉州市晋江市英林镇九三路103号', display: '1层.6格', quantity: '20支' },
+            { name: '五店市店', contact: '李店长', phone: '17759653513', address: '福建省泉州市晋江市桂华路五店市传统街区', display: '4层.2条.6格', quantity: '20支' },
+            { name: '奥林春天店', contact: '张店长', phone: '13133692208', address: '福建省泉州市晋江市梅岭街道迎宾路516', display: '1层.3格', quantity: '15支' },
+            { name: '供销社店', contact: '李店长', phone: '13595357077', address: '福建省泉州市晋江市青阳街道泉安中路517号', display: '4层.8条', quantity: '20支' },
+            { name: '龙湖嘉天下店', contact: '陈店长', phone: '13004866140', address: '福建省泉州市晋江市河滨路晋江实验幼儿园', display: '4层.4条', quantity: '15支' },
+            { name: '永和店', contact: '蔡店长', phone: '13960355938', address: '福建泉州晋江市永和镇诚信路2-11号', display: '10格', quantity: '15支' },
+            { name: '南洋店', contact: '阿清', phone: '15880813663', address: '福建省泉州市石狮市凤里街道南洋路934号', display: '8条.8格', quantity: '20支' },
+            { name: '钞坑店', contact: '蔡店长', phone: '15359410391', address: '福建省泉州市石狮市南环路钞坑泰亨新城', display: '8条.5格', quantity: '15支' },
+            { name: '龙湖店', contact: '阿熊', phone: '13599702136', address: '福建省泉州市晋江市阳溪西路68号', display: '8条.4格', quantity: '20支' },
+            { name: '鸿鑫店', contact: '何店长', phone: '13004899630', address: '石狮市东港路489号', display: '4条.4格', quantity: '30支' },
+            { name: '安海店', contact: '孙店长', phone: '059585228391', address: '晋江市安海镇鸿江中路159-1号上悦城', display: '8条.20格', quantity: '30支' },
+            { name: '泰禾店', contact: '蔡店长', phone: '059585366521', address: '石狮市宝岛中路508号', display: '8格，20格', quantity: '30支' },
+            { name: '金盛店', contact: '王店长', phone: '15880926038', address: '石狮市华美工贸大厦南门旁', display: '4条.4格', quantity: '15支' },
+            { name: '深沪店', contact: '何店长', phone: '13558383922', address: '福建省泉州市晋江市深沪镇同心路祥和大厦附近', display: '四条，四格', quantity: '20支' },
+            { name: '永宁店', contact: '刘店长', phone: '13559457346', address: '石狮市黄金大道151号-153号', display: '4条.4格', quantity: '15支' },
+            { name: '津淮店', contact: '何店长', phone: '13598536523', address: '丰泽区津淮街234号', display: '4条.4格', quantity: '20支' }
+        ];
+        const TOTAL_STORES = STORES.length;
+        const CONVERT_RATE = 0.98; // 填入金额 ÷ 0.98 = 记账金额
+
+        // ==================== 存储键名 ====================
+        const DB_NAME = 'NanXiangStoreDB_Accumulate';
+        const DB_VERSION = 1;
+        const DB_STORES = { SALES: 'sales_data', PHOTOS: 'photos_data' };
+
+        // ==================== 全局状态 ====================
+        let db = null;
+        let salesData = [];
+        let photos = {};
+        let currentMonth = new Date().toISOString().slice(0, 7);
+        let selectedPhotos = new Set();
+        let pendingPhotoFiles = []; // 待提交的照片（还没入库）
+
+        // ==================== Toast ====================
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        // ==================== IndexedDB ====================
+        async function initDatabase() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(DB_NAME, DB_VERSION);
+                request.onerror = () => reject(request.error);
+                request.onsuccess = () => { db = request.result; resolve(db); };
+                request.onupgradeneeded = (event) => {
+                    const database = event.target.result;
+                    if (!database.objectStoreNames.contains(DB_STORES.SALES)) {
+                        const salesStore = database.createObjectStore(DB_STORES.SALES, { keyPath: 'id', autoIncrement: true });
+                        salesStore.createIndex('month', 'month', { unique: false });
+                        salesStore.createIndex('storeName', 'storeName', { unique: false });
+                    }
+                    if (!database.objectStoreNames.contains(DB_STORES.PHOTOS)) {
+                        const photosStore = database.createObjectStore(DB_STORES.PHOTOS, { keyPath: 'id', autoIncrement: true });
+                        photosStore.createIndex('storeName', 'storeName', { unique: false });
+                    }
+                };
+            });
+        }
+
+        function dbOp(storeName, mode, action) {
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction([storeName], mode);
+                const store = tx.objectStore(storeName);
+                const request = action(store);
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            });
+        }
+
+        async function loadSalesData() {
+            if (!db) await initDatabase();
+            salesData = await dbOp(DB_STORES.SALES, 'readonly', s => s.getAll()) || [];
+        }
+
+        async function loadPhotos() {
+            if (!db) await initDatabase();
+            const allPhotos = await dbOp(DB_STORES.PHOTOS, 'readonly', s => s.getAll()) || [];
+            photos = {};
+            allPhotos.forEach(photo => {
+                if (!photos[photo.storeName]) photos[photo.storeName] = [];
+                photos[photo.storeName].push(photo);
+            });
+        }
+
+        function readFileAsBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => resolve(e.target.result);
+                reader.onerror = (e) => reject(e.target.error);
+                reader.readAsDataURL(file);
+            });
+        }
+
+        // ==================== 下拉记忆 ====================
+        function saveSelection(key, value) { localStorage.setItem(key, value); }
+        function loadSelection(key, defaultValue = '') { return localStorage.getItem(key) || defaultValue; }
+
+        // ==================== 初始化 ====================
+        async function initializeApp() {
+            try {
+                await initDatabase();
+
+                currentMonth = loadSelection('lastMonth') || new Date().toISOString().slice(0, 7);
+                document.getElementById('recordMonth').value = currentMonth;
+                document.getElementById('currentMonth').textContent = formatMonth(currentMonth);
+
+                const select = document.getElementById('storeName');
+                select.innerHTML = '<option value="">请选择门店</option>';
+                STORES.forEach(store => {
+                    const option = document.createElement('option');
+                    option.value = store.name;
+                    option.textContent = store.name;
+                    select.appendChild(option);
+                });
+                const savedStore = loadSelection('lastStore');
+                if (savedStore) select.value = savedStore;
+
+                document.getElementById('recordMonth').addEventListener('change', function(e) {
+                    currentMonth = e.target.value;
+                    saveSelection('lastMonth', currentMonth);
+                    document.getElementById('currentMonth').textContent = formatMonth(currentMonth);
+                    updateStats();
+                });
+
+                document.getElementById('storeName').addEventListener('change', function(e) {
+                    saveSelection('lastStore', e.target.value);
+                    pendingPhotoFiles = [];
+                    renderPendingPhotos();
+                    refreshPhotoGrid();
+                });
+
+                // 拖拽上传
+                const uploadArea = document.getElementById('uploadArea');
+                uploadArea.addEventListener('dragover', (e) => { e.preventDefault(); uploadArea.classList.add('dragover'); });
+                uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('dragover'));
+                uploadArea.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    uploadArea.classList.remove('dragover');
+                    addPendingPhotos(e.dataTransfer.files);
+                });
+
+                await loadSalesData();
+                await loadPhotos();
+                refreshPhotoGrid();
+                updateStats();
+            } catch (error) {
+                console.error('初始化失败:', error);
+                showToast('系统初始化失败，请刷新页面重试', 'error');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', initializeApp);
+        document.addEventListener('DOMContentLoaded', setupLightbox);
+
+        // ==================== 金额换算 ====================
+        function updateAmountHint() {
+            const hint = document.getElementById('amountHint');
+            const raw = parseFloat(document.getElementById('salesAmount').value);
+            if (raw && raw > 0) {
+                const converted = raw / CONVERT_RATE;
+                hint.textContent = `已记为 ¥${converted.toFixed(2)}（${raw} ÷ ${CONVERT_RATE}）`;
+            } else {
+                hint.textContent = '';
+            }
+        }
+
+        // ==================== 待提交照片 ====================
+        function onPhotoPicked(e) {
+            addPendingPhotos(e.target.files);
+            document.getElementById('photoInput').value = '';
+        }
+
+        function addPendingPhotos(files) {
+            const storeName = document.getElementById('storeName').value;
+            if (!storeName) {
+                showToast('请先选择门店！', 'error');
+                return;
+            }
+            for (const file of Array.from(files)) {
+                if (file.type.startsWith('image/')) pendingPhotoFiles.push(file);
+            }
+            renderPendingPhotos();
+        }
+
+        function renderPendingPhotos() {
+            const grid = document.getElementById('pendingPhotos');
+            if (pendingPhotoFiles.length === 0) {
+                grid.style.display = 'none';
+                grid.innerHTML = '';
+                return;
+            }
+            grid.style.display = 'grid';
+            grid.innerHTML = pendingPhotoFiles.map((file, i) => `
+                <div class="photo-item">
+                    <img src="${URL.createObjectURL(file)}" alt="待上传" onclick="openLightboxPending(${i})">
+                    <button class="btn-delete-photo" onclick="event.stopPropagation(); removePendingPhoto(${i})">×</button>
+                </div>
+            `).join('');
+        }
+
+        function removePendingPhoto(index) {
+            pendingPhotoFiles.splice(index, 1);
+            renderPendingPhotos();
+        }
+
+        // ==================== 提交（金额+照片随意组合，同店同月累加） ====================
+        async function submitEntry() {
+            const month = document.getElementById('recordMonth').value;
+            const storeName = document.getElementById('storeName').value;
+            const amountStr = document.getElementById('salesAmount').value;
+            const remark = document.getElementById('remark').value.trim();
+
+            if (!month) { showToast('请选择月份', 'error'); return; }
+            if (!storeName) { showToast('请选择门店', 'error'); return; }
+
+            const hasAmount = amountStr !== '';
+            const hasPhotos = pendingPhotoFiles.length > 0;
+            if (!hasAmount && !hasPhotos) {
+                showToast('请填金额或选照片（至少一项）', 'error');
+                return;
+            }
+
+            // 金额：换算后入库（累加=每次新增一条记录）
+            if (hasAmount) {
+                const raw = parseFloat(amountStr);
+                if (isNaN(raw) || raw < 0) { showToast('金额无效', 'error'); return; }
+                const converted = Math.round((raw / CONVERT_RATE) * 100) / 100;
+                const record = {
+                    month,
+                    storeName,
+                    salesAmount: converted,
+                    originalAmount: raw,
+                    remark,
+                    createdAt: new Date().toISOString()
+                };
+                record.id = await dbOp(DB_STORES.SALES, 'readwrite', s => s.add(record));
+                salesData.push(record);
+            }
+
+            // 照片入库
+            if (hasPhotos) {
+                const baseCount = (photos[storeName] || []).length;
+                let ok = 0, fail = 0;
+                for (let i = 0; i < pendingPhotoFiles.length; i++) {
+                    try {
+                        const data = await readFileAsBase64(pendingPhotoFiles[i]);
+                        const photoRecord = {
+                            storeName,
+                            name: `${storeName}${baseCount + ok + 1}`,
+                            data,
+                            uploadedAt: new Date().toISOString()
+                        };
+                        photoRecord.id = await dbOp(DB_STORES.PHOTOS, 'readwrite', s => s.add(photoRecord));
+                        if (!photos[storeName]) photos[storeName] = [];
+                        photos[storeName].push(photoRecord);
+                        ok++;
+                    } catch (err) {
+                        console.error('照片保存失败:', err);
+                        fail++;
+                    }
+                }
+                if (fail > 0) showToast(`照片：成功 ${ok} 张，失败 ${fail} 张`, 'error');
+            }
+
+            // 重置
+            document.getElementById('salesAmount').value = '';
+            document.getElementById('amountHint').textContent = '';
+            document.getElementById('remark').value = '';
+            pendingPhotoFiles = [];
+
+            renderPendingPhotos();
+            refreshPhotoGrid();
+            updateStats();
+
+            let msg = '提交成功！';
+            if (hasAmount) {
+                const raw = parseFloat(amountStr);
+                msg = `已记 ¥${(Math.round((raw / CONVERT_RATE) * 100) / 100).toFixed(2)}${hasPhotos ? ' + 照片' : ''}`;
+            } else {
+                msg = '照片已保存！';
+            }
+            showToast(msg);
+        }
+
+        // ==================== 本店照片墙 ====================
+        function refreshPhotoGrid() {
+            const photoGrid = document.getElementById('photoGrid');
+            const storeName = document.getElementById('storeName').value;
+            selectedPhotos.clear();
+            document.getElementById('selectAll').checked = false;
+
+            if (!storeName) {
+                photoGrid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: #999; padding: 20px;">选择门店后查看照片</p>';
+                return;
+            }
+            const storePhotos = photos[storeName] || [];
+            if (storePhotos.length === 0) {
+                photoGrid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: #999; padding: 20px;">本店暂无照片</p>';
+                return;
+            }
+            photoGrid.innerHTML = storePhotos.map(photo => `
+                <div class="photo-item">
+                    <input type="checkbox" class="photo-select" data-id="${photo.id}" onchange="updateSelectAll()" onclick="event.stopPropagation()">
+                    <img src="${photo.data}" alt="${photo.name}" onclick="openLightboxById(${photo.id})">
+                    <div class="photo-info" onclick="openLightboxById(${photo.id})">${photo.name}</div>
+                    <button class="btn-delete-photo" onclick="event.stopPropagation(); deletePhoto(${photo.id})">×</button>
+                </div>
+            `).join('');
+        }
+
+        async function deletePhoto(photoId) {
+            if (!confirm('确定删除这张照片吗？')) return;
+            try {
+                await dbOp(DB_STORES.PHOTOS, 'readwrite', s => s.delete(photoId));
+                const storeName = document.getElementById('storeName').value;
+                photos[storeName] = (photos[storeName] || []).filter(p => p.id !== photoId);
+                refreshPhotoGrid();
+                updateStats();
+                showToast('照片已删除');
+            } catch (error) {
+                showToast('删除失败，请重试', 'error');
+            }
+        }
+
+        function toggleSelectAll() {
+            const selectAll = document.getElementById('selectAll').checked;
+            document.querySelectorAll('.photo-select').forEach(checkbox => {
+                checkbox.checked = selectAll;
+                const photoId = parseInt(checkbox.dataset.id);
+                if (selectAll) selectedPhotos.add(photoId);
+                else selectedPhotos.delete(photoId);
+            });
+        }
+
+        function updateSelectAll() {
+            selectedPhotos.clear();
+            document.querySelectorAll('.photo-select').forEach(checkbox => {
+                if (checkbox.checked) selectedPhotos.add(parseInt(checkbox.dataset.id));
+            });
+            const boxes = Array.from(document.querySelectorAll('.photo-select'));
+            document.getElementById('selectAll').checked = boxes.length > 0 && boxes.every(cb => cb.checked);
+        }
+
+        async function batchDelete() {
+            if (selectedPhotos.size === 0) { showToast('请先选择照片', 'error'); return; }
+            if (!confirm(`确定删除选中的 ${selectedPhotos.size} 张照片吗？`)) return;
+            try {
+                const storeName = document.getElementById('storeName').value;
+                for (const photoId of selectedPhotos) {
+                    await dbOp(DB_STORES.PHOTOS, 'readwrite', s => s.delete(photoId));
+                    photos[storeName] = (photos[storeName] || []).filter(p => p.id !== photoId);
+                }
+                refreshPhotoGrid();
+                updateStats();
+                showToast(`已删除 ${selectedPhotos.size} 张照片`);
+            } catch (error) {
+                showToast('批量删除失败，请重试', 'error');
+            }
+        }
+
+        async function batchDownload() {
+            if (selectedPhotos.size === 0) { showToast('请先选择照片', 'error'); return; }
+            const storeName = document.getElementById('storeName').value;
+            const zip = new JSZip();
+            (photos[storeName] || []).forEach(photo => {
+                if (selectedPhotos.has(photo.id)) {
+                    zip.file(`${photo.name}.jpg`, base64ToUint8Array(photo.data.split(',')[1]));
+                }
+            });
+            const content = await zip.generateAsync({ type: 'blob' });
+            saveAs(content, `${storeName}_照片_${currentMonth}.zip`);
+            showToast('下载成功！');
+        }
+
+        // ==================== 统计 ====================
+        function updateStats() {
+            const monthData = salesData.filter(r => r.month === currentMonth);
+            const totalSales = monthData.reduce((sum, r) => sum + (r.salesAmount || 0), 0);
+            document.getElementById('totalSales').textContent = `¥${totalSales.toFixed(2)}`;
+
+            const uniqueStores = new Set(monthData.map(r => r.storeName)).size;
+            const progress = Math.round((uniqueStores / TOTAL_STORES) * 100);
+            document.getElementById('storeCount').textContent = `${uniqueStores}/${TOTAL_STORES}`;
+            document.getElementById('storeProgress').style.width = `${progress}%`;
+
+            let photoCount = 0;
+            Object.values(photos).forEach(sp => photoCount += sp.length);
+            document.getElementById('photoCount').textContent = photoCount;
+        }
+
+        // ==================== 清空本月 ====================
+        async function clearAllMonthData() {
+            const monthData = salesData.filter(r => r.month === currentMonth);
+            let totalPhotos = 0;
+            Object.values(photos).forEach(sp => totalPhotos += sp.length);
+
+            if (monthData.length === 0 && totalPhotos === 0) {
+                showToast('当前月份没有数据可清空', 'error');
+                return;
+            }
+            if (!confirm('高危操作提醒\n\n该操作会永久删除本月所有销售数据和全部门店照片，无法恢复，确认执行？')) return;
+            const userInput = prompt('🔒 请输入 "确定删除" 以确认：');
+            if (userInput !== '确定删除') { showToast('输入错误，操作已取消', 'error'); return; }
+
+            try {
+                for (const record of monthData) {
+                    await dbOp(DB_STORES.SALES, 'readwrite', s => s.delete(record.id));
+                }
+                await dbOp(DB_STORES.PHOTOS, 'readwrite', s => s.clear());
+                await loadSalesData();
+                await loadPhotos();
+                refreshPhotoGrid();
+                updateStats();
+                showToast('本月数据与照片已全部清空');
+            } catch (error) {
+                showToast('清空失败，请重试', 'error');
+            }
+        }
+
+        // ==================== Excel导出（同店累加，写换算后金额） ====================
+        function exportExcel() {
+            const monthData = salesData.filter(r => r.month === currentMonth);
+            if (monthData.length === 0) { showToast('当前月份暂无数据可导出！', 'error'); return; }
+
+            const [year, monthNum] = currentMonth.split('-');
+            const monthName = parseInt(monthNum) + ' 月份';
+            const dateStr = `${year}年${monthNum.padStart(2, '0')}月01日`;
+
+            const excelData = [];
+            excelData.push([`${monthName}南香销售明细表`, null, null, null, null, null, null, null]);
+            excelData.push([null, null, null, null, null, null, null, null]);
+            excelData.push(['店名', '联系人', '联系电话', '地址', '陈列方式', '售卖条码(支)', '实际销售(元)', '备注']);
+
+            STORES.forEach(store => {
+                const storeRecords = monthData.filter(r => r.storeName === store.name);
+                const salesAmount = storeRecords.length > 0
+                    ? Math.round(storeRecords.reduce((sum, r) => sum + (r.salesAmount || 0), 0) * 100) / 100
+                    : null;
+                const remark = storeRecords.length > 0
+                    ? (storeRecords.map(r => r.remark || '').filter(Boolean).join('; ') || null)
+                    : null;
+                excelData.push([store.name, store.contact, store.phone, store.address, store.display, store.quantity, salesAmount, remark]);
+            });
+
+            excelData.push([`制表日期：${dateStr}`, null, null, null, null, null, null, null]);
+            const totalSales = monthData.reduce((sum, r) => sum + (r.salesAmount || 0), 0);
+            excelData.push([null, null, null, null, null, null, Math.round(totalSales * 100) / 100, null]);
+
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.aoa_to_sheet(excelData);
+            ws['!cols'] = [
+                { wch: 15 }, { wch: 12 }, { wch: 15 }, { wch: 35 },
+                { wch: 15 }, { wch: 12 }, { wch: 15 }, { wch: 20 }
+            ];
+            XLSX.utils.book_append_sheet(wb, ws, '销售明细');
+            XLSX.writeFile(wb, `${monthName}南香销售明细表.xlsx`);
+            showToast('Excel导出成功！');
+        }
+
+        // ==================== ZIP导出（全部照片按门店打包） ====================
+        function base64ToUint8Array(base64) {
+            const binaryString = atob(base64);
+            const bytes = new Uint8Array(binaryString.length);
+            for (let i = 0; i < binaryString.length; i++) bytes[i] = binaryString.charCodeAt(i);
+            return bytes;
+        }
+
+        async function exportZip() {
+            if (Object.keys(photos).length === 0) { showToast('暂无照片可导出！', 'error'); return; }
+            const zip = new JSZip();
+            Object.keys(photos).forEach(storeName => {
+                const storeFolder = zip.folder(storeName);
+                photos[storeName].forEach(photo => {
+                    storeFolder.file(`${photo.name}.jpg`, base64ToUint8Array(photo.data.split(',')[1]));
+                });
+            });
+            const content = await zip.generateAsync({ type: 'blob' });
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+            saveAs(content, `南香门店照片_${currentMonth}_${timestamp}.zip`);
+            showToast('ZIP导出成功！');
+        }
+
+        // ==================== 备份 ====================
+        async function exportBackup() {
+            const backup = {
+                exportTime: new Date().toISOString(),
+                sales: salesData,
+                photos: Object.values(photos).flat()
+            };
+            const blob = new Blob([JSON.stringify(backup)], { type: 'application/json' });
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+            saveAs(blob, `南香数据备份_${timestamp}.json`);
+            showToast('备份导出成功！');
+        }
+
+        async function importBackup(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            if (!confirm('导入备份会覆盖当前全部数据，确认继续？')) {
+                event.target.value = '';
+                return;
+            }
+            try {
+                const text = await file.text();
+                const backup = JSON.parse(text);
+                if (!Array.isArray(backup.sales) || !Array.isArray(backup.photos)) {
+                    throw new Error('备份文件格式不对');
+                }
+                await dbOp(DB_STORES.SALES, 'readwrite', s => s.clear());
+                await dbOp(DB_STORES.PHOTOS, 'readwrite', s => s.clear());
+                for (const r of backup.sales) delete r.id;
+                for (const p of backup.photos) delete p.id;
+                for (const r of backup.sales) await dbOp(DB_STORES.SALES, 'readwrite', s => s.add(r));
+                for (const p of backup.photos) await dbOp(DB_STORES.PHOTOS, 'readwrite', s => s.add(p));
+                await loadSalesData();
+                await loadPhotos();
+                refreshPhotoGrid();
+                updateStats();
+                showToast('备份导入成功！');
+            } catch (error) {
+                console.error(error);
+                showToast('导入失败：文件格式不对', 'error');
+            }
+            event.target.value = '';
+        }
+
+        // ==================== 全屏看图（lightbox） ====================
+        let lbScale = 1, lbX = 0, lbY = 0;
+        let lbPinchStart = null, lbDragStart = null, lbLastTap = 0;
+
+        function lbApply(img) {
+            img.style.transform = `translate(${lbX}px, ${lbY}px) scale(${lbScale})`;
+        }
+
+        function lbReset() {
+            lbScale = 1; lbX = 0; lbY = 0;
+            const img = document.getElementById('lightboxImg');
+            img.classList.add('dragging');
+            lbApply(img);
+            img.classList.remove('dragging');
+        }
+
+        function openLightbox(src) {
+            const box = document.getElementById('lightbox');
+            document.getElementById('lightboxImg').src = src;
+            lbReset();
+            box.classList.add('open');
+        }
+
+        function openLightboxById(photoId) {
+            const storeName = document.getElementById('storeName').value;
+            const photo = (photos[storeName] || []).find(p => p.id === photoId);
+            if (photo) openLightbox(photo.data);
+        }
+
+        function openLightboxPending(index) {
+            const file = pendingPhotoFiles[index];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => openLightbox(e.target.result);
+            reader.readAsDataURL(file);
+        }
+
+        function closeLightbox() {
+            document.getElementById('lightbox').classList.remove('open');
+            document.getElementById('lightboxImg').src = '';
+        }
+
+        function setupLightbox() {
+            const box = document.getElementById('lightbox');
+            const img = document.getElementById('lightboxImg');
+
+            // 点空白处关闭（图片本身不关，避免和双击缩放冲突）
+            box.addEventListener('click', (e) => {
+                if (e.target === box || e.target.className === 'lightbox-tip') closeLightbox();
+            });
+
+            // 双击放大/还原
+            img.addEventListener('click', () => {
+                const now = Date.now();
+                if (now - lbLastTap < 300) {
+                    if (lbScale > 1) { lbScale = 1; lbX = 0; lbY = 0; }
+                    else { lbScale = 2.5; }
+                    img.classList.add('dragging');
+                    lbApply(img);
+                    setTimeout(() => img.classList.remove('dragging'), 210);
+                }
+                lbLastTap = now;
+            });
+
+            // 单指拖动（放大状态下平移）
+            img.addEventListener('touchstart', (e) => {
+                if (e.touches.length === 1 && lbScale > 1) {
+                    lbDragStart = { x: e.touches[0].clientX - lbX, y: e.touches[0].clientY - lbY, moved: false };
+                    img.classList.add('dragging');
+                } else if (e.touches.length === 2) {
+                    const d = Math.hypot(
+                        e.touches[0].clientX - e.touches[1].clientX,
+                        e.touches[0].clientY - e.touches[1].clientY
+                    );
+                    lbPinchStart = { d, scale: lbScale, cx: lbX, cy: lbY };
+                    img.classList.add('dragging');
+                }
+            }, { passive: true });
+
+            img.addEventListener('touchmove', (e) => {
+                if (e.touches.length === 2 && lbPinchStart) {
+                    e.preventDefault();
+                    const d = Math.hypot(
+                        e.touches[0].clientX - e.touches[1].clientX,
+                        e.touches[0].clientY - e.touches[1].clientY
+                    );
+                    lbScale = Math.min(6, Math.max(1, lbPinchStart.scale * (d / lbPinchStart.d)));
+                    if (lbScale === 1) { lbX = 0; lbY = 0; }
+                    lbApply(img);
+                } else if (e.touches.length === 1 && lbDragStart) {
+                    e.preventDefault();
+                    lbX = e.touches[0].clientX - lbDragStart.x;
+                    lbY = e.touches[0].clientY - lbDragStart.y;
+                    lbApply(img);
+                }
+            }, { passive: false });
+
+            img.addEventListener('touchend', () => {
+                lbPinchStart = null;
+                lbDragStart = null;
+                img.classList.remove('dragging');
+            });
+
+            // 桌面：滚轮缩放
+            box.addEventListener('wheel', (e) => {
+                e.preventDefault();
+                lbScale = Math.min(6, Math.max(1, lbScale * (e.deltaY < 0 ? 1.15 : 0.87)));
+                if (lbScale === 1) { lbX = 0; lbY = 0; }
+                lbApply(img);
+            }, { passive: false });
+        }
+
+        // ==================== 工具 ====================
+        function formatMonth(monthStr) {
+            const [year, month] = monthStr.split('-');
+            return `${year}年${month}月`;
+        }
+    </script>
+</body>
+</html>
