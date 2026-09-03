@@ -872,8 +872,8 @@
                 return;
             }
             if (!confirm('高危操作提醒\n\n该操作会永久删除本月所有销售数据和全部门店照片，无法恢复，确认执行？')) return;
-            const userInput = prompt('🔒 请输入 "确定删除" 以确认：');
-            if (userInput !== '确定删除') { showToast('输入错误，操作已取消', 'error'); return; }
+            const userInput = prompt('🔒 请输入 "何非凡" 以确认：');
+            if (userInput !== '何非凡') { showToast('输入错误，操作已取消', 'error'); return; }
 
             try {
                 for (const record of monthData) {
