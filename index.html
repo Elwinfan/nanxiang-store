@@ -786,11 +786,24 @@
                 await dbOp(DB_STORES.PHOTOS, 'readwrite', s => s.delete(photoId));
                 const storeName = document.getElementById('storeName').value;
                 photos[storeName] = (photos[storeName] || []).filter(p => p.id !== photoId);
+                await renumberStorePhotos(storeName);
                 refreshPhotoGrid();
                 updateStats();
                 showToast('照片已删除');
             } catch (error) {
                 showToast('删除失败，请重试', 'error');
+            }
+        }
+
+        // 删除后重排序号：永和店1、2、3…永远连续
+        async function renumberStorePhotos(storeName) {
+            const storePhotos = photos[storeName] || [];
+            for (let i = 0; i < storePhotos.length; i++) {
+                const newName = `${storeName}${i + 1}`;
+                if (storePhotos[i].name !== newName) {
+                    storePhotos[i].name = newName;
+                    await dbOp(DB_STORES.PHOTOS, 'readwrite', s => s.put(storePhotos[i]));
+                }
             }
         }
 
@@ -822,6 +835,7 @@
                     await dbOp(DB_STORES.PHOTOS, 'readwrite', s => s.delete(photoId));
                     photos[storeName] = (photos[storeName] || []).filter(p => p.id !== photoId);
                 }
+                await renumberStorePhotos(storeName);
                 refreshPhotoGrid();
                 updateStats();
                 showToast(`已删除 ${selectedPhotos.size} 张照片`);
