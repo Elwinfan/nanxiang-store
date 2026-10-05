@@ -231,9 +231,10 @@
         .wm-selinfo b { color: #2563eb; }
 
         /* 照片预览大图 */
-        .pv-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.92); z-index: 99999; display: none; align-items: center; justify-content: center; cursor: zoom-out; }
+        .pv-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.92); z-index: 99999; display: none; align-items: center; justify-content: center; cursor: zoom-out; touch-action: none; }
         .pv-overlay.open { display: flex; flex-direction: column; }
-        .pv-overlay img { max-width: 96vw; max-height: 78vh; object-fit: contain; border-radius: 6px; }
+        .pv-overlay img { max-width: 96vw; max-height: 78vh; object-fit: contain; border-radius: 6px; will-change: transform; cursor: grab; }
+        .pv-overlay img:active { cursor: grabbing; }
         .pv-overlay #pvSwap { position: relative; z-index: 2; margin-top: 18px; padding: 13px 34px; border: none; border-radius: 12px; background: #2563eb; color: #fff; font-size: 16px; font-weight: 700; cursor: pointer; box-shadow: 0 4px 18px rgba(0,0,0,.4); }
 
         /* ==================== 整理标签（licheng 复刻） ==================== */
@@ -1480,6 +1481,98 @@ function drawLogoText(ctx, canvas, effectiveScale) {
         $('#pvSwap').onclick=null;
     }
 
+    /* 放大层手势（v6）：双指捏合缩放 / 单指拖动 / 双击放大缩小 / 滚轮+拖动（电脑） */
+    (function(){
+        const ov=$('#pvOverlay'), img=$('#pvImg');
+        let scale=1, tx=0, ty=0, st=null, mst=null, lastTap=0, suppressClick=false;
+        function apply(anim){
+            img.style.transition=anim?'transform .18s ease':'none';
+            img.style.transform=`translate(${tx}px,${ty}px) scale(${scale})`;
+        }
+        function reset(){ scale=1; tx=0; ty=0; apply(true); }
+        function clampPan(){
+            const mx=Math.max(0,(scale-1)*innerWidth/2), my=Math.max(0,(scale-1)*innerHeight/2);
+            tx=Math.max(-mx,Math.min(mx,tx)); ty=Math.max(-my,Math.min(my,ty));
+        }
+        function anchorZoom(ns, cx, cy){
+            const k=ns/scale, ax=cx-innerWidth/2, ay=cy-innerHeight/2;
+            tx=ax-(ax-tx)*k; ty=ay-(ay-ty)*k; scale=ns; clampPan(); apply(false);
+        }
+        img.addEventListener('load', reset);
+        ov.addEventListener('touchstart', e=>{
+            if(e.touches.length>=2){
+                const a=e.touches[0], b=e.touches[1];
+                st={m:'z', d0:Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY), s0:scale, moved:10};
+            }else{
+                const t=e.touches[0];
+                st={m:'p', x:t.clientX, y:t.clientY, tx0:tx, ty0:ty, moved:0};
+            }
+        }, {passive:true});
+        ov.addEventListener('touchmove', e=>{
+            if(!st) return; e.preventDefault();
+            if(st.m==='z' && e.touches.length>=2){
+                const a=e.touches[0], b=e.touches[1];
+                const d=Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY);
+                const ns=Math.max(1, Math.min(8, st.s0*d/st.d0));
+                anchorZoom(ns, (a.clientX+b.clientX)/2, (a.clientY+b.clientY)/2);
+            }else if(st.m==='p'){
+                const t=e.touches[0];
+                const dx=t.clientX-st.x, dy=t.clientY-st.y;
+                st.moved=Math.max(st.moved, Math.hypot(dx,dy));
+                if(scale>1){ tx=st.tx0+dx; ty=st.ty0+dy; clampPan(); apply(false); }
+            }
+        }, {passive:false});
+        ov.addEventListener('touchend', e=>{
+            if(!st) return;
+            const wasTap = st.m==='p' && st.moved<=10;
+            if(st.moved>10) suppressClick=true;
+            if(e.touches.length===0){
+                if(st.m==='z' && scale<1.06) reset();
+                else if(scale>1) apply(true);
+                st=null;
+                if(wasTap){
+                    const now=Date.now(), t=e.changedTouches[0];
+                    if(now-lastTap<320){
+                        lastTap=0; suppressClick=true;
+                        if(clickTimer){ clearTimeout(clickTimer); clickTimer=null; }
+                        if(scale>1) reset(); else anchorZoom(2.5, t.clientX, t.clientY);
+                    }else lastTap=now;
+                }
+            }else if(e.touches.length===1 && st.m==='z'){
+                const t=e.touches[0];
+                st={m:'p', x:t.clientX, y:t.clientY, tx0:tx, ty0:ty, moved:10};
+            }
+        });
+        // 电脑：滚轮缩放 + 拖动
+        img.addEventListener('mousedown', e=>{ if(scale>1){ mst={x:e.clientX,y:e.clientY,tx0:tx,ty0:ty,moved:0}; e.preventDefault(); } });
+        ov.addEventListener('mousemove', e=>{
+            if(!mst) return;
+            const dx=e.clientX-mst.x, dy=e.clientY-mst.y;
+            mst.moved=Math.max(mst.moved, Math.hypot(dx,dy));
+            tx=mst.tx0+dx; ty=mst.ty0+dy; clampPan(); apply(false);
+        });
+        ov.addEventListener('mouseup', ()=>{ if(mst && mst.moved>10) suppressClick=true; mst=null; });
+        ov.addEventListener('wheel', e=>{
+            e.preventDefault();
+            const ns=Math.max(1, Math.min(8, scale*(e.deltaY<0?1.18:1/1.18)));
+            if(ns===1){ reset(); return; }
+            anchorZoom(ns, e.clientX, e.clientY);
+        }, {passive:false});
+        // 统一点击：单击=关闭（280ms内二次点击算双击→放大/复位）；拖动后的第一次点击拦掉防误关
+        let clickTimer=null;
+        ov.addEventListener('click', e=>{
+            if(e.target.closest && e.target.closest('#pvSwap')) return;
+            e.stopPropagation(); e.preventDefault();
+            if(suppressClick){ suppressClick=false; return; }
+            if(clickTimer){
+                clearTimeout(clickTimer); clickTimer=null;
+                if(scale>1) reset(); else anchorZoom(2.5, e.clientX, e.clientY);
+            }else{
+                clickTimer=setTimeout(()=>{ clickTimer=null; if(scale<=1) closePv(); }, 280);
+            }
+        }, true);
+    })();
+
     async function fileToPhoto(file){
         try{
             const bmp=await decodeBitmap(file, 1280);
@@ -1686,6 +1779,14 @@ function drawLogoText(ctx, canvas, effectiveScale) {
         $('#spHint').textContent='÷0.98 = —';
         $('#salePhotoModal').classList.add('open');
     }
+    // 弹窗里点照片 → 全屏放大看数字（双指捏合可放大到看清价签金额）
+    $('#spImg').addEventListener('click', ()=>{
+        const it=spQueue[0]; if(!it) return;
+        $('#pvImg').src=it.full;
+        $('#pvSwap').style.display='none';
+        $('#pvOverlay').classList.add('open');
+        $('#pvOverlay').onclick=()=>{ closePv(); };
+    });
     $('#spAmount').addEventListener('input', e=>{
         const v=parseFloat(e.target.value);
         $('#spHint').textContent=(isNaN(v)||v<0)?'÷0.98 = —':`÷0.98 = ${(Math.round(v/0.98*100)/100).toFixed(2)} 元`;
