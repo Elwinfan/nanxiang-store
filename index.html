@@ -573,7 +573,8 @@
                 <small class="sale-hint" id="spHint">÷0.98 = —</small>
             </div>
             <div class="lib-modal-actions">
-                <button class="clr" id="spSkip" type="button">⏭️ 跳过这张</button>
+                <button class="clr" id="spCancelAll" type="button">✖ 全取消</button>
+                <button class="clr" id="spSkip" type="button">⏭️ 跳过</button>
                 <button class="go" id="spOk" type="button">✅ 完成</button>
             </div>
         </div>
@@ -1770,7 +1771,8 @@ function drawLogoText(ctx, canvas, effectiveScale) {
     function spShowOne(){
         const it=spQueue[0];
         $('#spImg').src=it.full;
-        $('#spProgress').textContent=`（还剩 ${spQueue.length} 张）`;
+        const m=$('#saleMonth').value || curMonth;
+        $('#spProgress').textContent=`（还剩 ${spQueue.length} 张 · 记账月 ${m}）`;
         const sel=$('#spStore');
         const prev=spLast?spLast.store:'';
         sel.innerHTML=STORES_META.map(m=>`<option value="${esc(m.name)}">${esc(m.name)}</option>`).join('');
@@ -1797,6 +1799,13 @@ function drawLogoText(ctx, canvas, effectiveScale) {
         $('#salePhotoModal').classList.remove('open');
     }
     $('#spSkip').addEventListener('click', ()=>{ spNext(); if(!spQueue.length) toast('已跳过，全部处理完','ok'); });
+    $('#spCancelAll').addEventListener('click', ()=>{
+        if(!spQueue.length) return;
+        if(!confirm('放弃剩余 '+spQueue.length+' 张？（已进店的不受影响）')) return;
+        spQueue=[];
+        $('#salePhotoModal').classList.remove('open');
+        toast('已全部取消','ok');
+    });
     $('#spOk').addEventListener('click', ()=>{
         const it=spQueue[0]; if(!it) return;
         const store=$('#spStore').value;
@@ -1933,6 +1942,8 @@ function drawLogoText(ctx, canvas, effectiveScale) {
     let saveTimer; let saving=false;
     function scheduleSave(){ clearTimeout(saveTimer); saveTimer=setTimeout(doSave,800); }
     async function doSave(){ if(saving){ scheduleSave(); return; } saving=true; try{ await idbPut(serialize()); }catch(e){} finally{ saving=false; } }
+    // 防抖窗口内切走/杀后台：pagehide 紧急落库兜底（移动端比 beforeunload 可靠）
+    window.addEventListener('pagehide', ()=>{ try{ idbPut(serialize()); }catch(e){} });
     $('#wmNoteInput').addEventListener('input', scheduleSave);
 
     // 初始化：门店卡从 STORES_META 预置
