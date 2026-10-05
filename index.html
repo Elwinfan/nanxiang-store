@@ -116,9 +116,9 @@
         }
 
         /* ==================== 顶部主标签（水印/整理） ==================== */
-        .main-tabs { position: sticky; top: 0; z-index: 50; display: flex; background: #fff; box-shadow: 0 2px 12px rgba(0,0,0,.08); }
-        .main-tabs .mtab { flex: 1; padding: 13px 4px 10px; border: none; background: none; font-size: 15px; font-weight: 700; color: #94a3b8; cursor: pointer; border-bottom: 3px solid transparent; }
-        .main-tabs .mtab.active { color: #2563eb; border-bottom-color: #2563eb; }
+        .main-tabs { position: sticky; top: 0; z-index: 50; display: flex; align-items: center; gap: 4px; background: rgba(255,255,255,.97); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); box-shadow: 0 1px 10px rgba(0,0,0,.06); padding: 8px 8px; }
+        .main-tabs .mtab { flex: 1; padding: 9px 2px; border: none; background: none; font-size: 15px; font-weight: 600; color: #64748b; cursor: pointer; border-radius: 10px; transition: color .15s, background .15s; white-space: nowrap; }
+        .main-tabs .mtab.active { color: #2563eb; background: #eff6ff; font-weight: 700; }
         .main-tabs .mtab .bdg { display: inline-block; min-width: 18px; padding: 0 5px; margin-left: 4px; border-radius: 9px; background: #e2e8f0; color: #475569; font-size: 11px; font-weight: 700; line-height: 18px; vertical-align: 2px; }
         .main-tabs .mtab.active .bdg { background: #dbeafe; color: #2563eb; }
         .main-tabs .bk-bar { flex: 0 0 auto; display: flex; align-items: center; padding: 0 8px; gap: 6px; }
@@ -323,6 +323,10 @@
         .sale-hint { font-size: 13px; color: #2563eb; font-weight: 600; }
         .sale-go { flex: 1; padding: 14px; border: none; border-radius: 12px; font-size: 15px; font-weight: 600; cursor: pointer; color: #fff; background: linear-gradient(135deg, #2563eb, #3b82f6); }
         .sale-xls { flex: 1; padding: 14px; border: none; border-radius: 12px; font-size: 15px; font-weight: 600; cursor: pointer; color: #fff; background: linear-gradient(135deg, #16a34a, #22c55e); }
+        .sale-photo-btn { width: 100%; padding: 14px; border: none; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; color: #7c2d12; background: linear-gradient(135deg, #fed7aa, #fdba74); margin-bottom: 14px; }
+        .sale-photo-btn:active { transform: scale(.98); }
+        .sp-imgwrap { display: flex; justify-content: center; margin-bottom: 14px; }
+        .sp-imgwrap img { max-width: 100%; max-height: 240px; border-radius: 12px; border: 2px solid #e2e8f0; object-fit: contain; }
         .sale-go:active, .sale-xls:active { transform: scale(.98); }
         .sale-sum { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px; padding: 10px 12px; font-size: 13px; color: #1e40af; margin-bottom: 10px; line-height: 1.7; }
         .sale-sum b { font-size: 15px; }
@@ -397,10 +401,10 @@
 
     <!-- 顶部主标签 -->
     <nav class="main-tabs">
-        <button class="mtab active" id="mtab-lib" type="button">📷 照片库</button>
-        <button class="mtab" id="mtab-wm" type="button">🖊️ 水印</button>
-        <button class="mtab" id="mtab-md" type="button">🗂️ 整理<span class="bdg" id="mdBadge">0</span></button>
-        <button class="mtab" id="mtab-sales" type="button">💰 记账</button>
+        <button class="mtab active" id="mtab-lib" type="button">照片</button>
+        <button class="mtab" id="mtab-wm" type="button">水印</button>
+        <button class="mtab" id="mtab-md" type="button">整理<span class="bdg" id="mdBadge">0</span></button>
+        <button class="mtab" id="mtab-sales" type="button">记账</button>
         <span class="bk-bar">
             <button class="bk-btn" id="bkSave" type="button" title="备份：导出全部数据（照片/门店/地址）">💾</button>
             <button class="bk-btn" id="bkLoad" type="button" title="恢复：从备份文件还原">↩️</button>
@@ -411,7 +415,7 @@
     <!-- ============ 照片库面板：多选导入·长期保存·送整理/送水印 ============ -->
     <section id="lib-panel" class="main-panel active">
         <div class="lib-wrap">
-            <div class="ptitle">📷 照片库 — 素材池：导入长期保存，勾选后送整理（不加水印）或送水印（加工）</div>
+            <div class="ptitle">照片 — 素材池：导入长期保存，勾选后送整理（不加水印）或送水印（加工）</div>
             <button class="lib-import" id="libImportBtn" type="button">➕ 导入照片（可多选，自动压缩）</button>
             <input type="file" id="libFileInput" accept="image/*" multiple hidden>
             <div id="libList"></div>
@@ -535,6 +539,8 @@
     <section id="sales-panel" class="main-panel">
         <div class="sale-wrap">
             <div class="ptitle">💰 账目登记 — 金额自动 ÷0.98 换算，同店多笔自动累加</div>
+            <button class="sale-photo-btn" id="salePhotoBtn" type="button">📷 导入实销照片（多选，逐张选店+填金额，自动进店+自动记账）</button>
+            <input type="file" id="salePhotoInput" accept="image/*" multiple hidden>
             <div class="row2">
                 <div class="f"><label>月份</label><input id="saleMonth" type="month"></div>
                 <div class="f"><label>门店</label><select id="saleStore"></select></div>
@@ -552,6 +558,23 @@
             <div class="sale-listwrap"><div class="sale-list" id="saleList"></div></div>
         </div>
     </section>
+
+    <!-- 实销照片逐张弹窗 -->
+    <div class="lib-modal" id="salePhotoModal">
+        <div class="lib-modal-card">
+            <div class="lib-modal-title">📷 实销照片 <span id="spProgress" style="font-size:13px;color:#2563eb;font-weight:600"></span></div>
+            <div class="sp-imgwrap"><img id="spImg" alt="照片预览"></div>
+            <div class="f"><label>门店 *</label><select id="spStore" class="sm-sel"></select></div>
+            <div class="f"><label>实销金额（实收原始，自动÷0.98记账）*</label>
+                <input id="spAmount" type="number" inputmode="decimal" step="0.01" min="0" placeholder="0.00">
+                <small class="sale-hint" id="spHint">÷0.98 = —</small>
+            </div>
+            <div class="lib-modal-actions">
+                <button class="clr" id="spSkip" type="button">⏭️ 跳过这张</button>
+                <button class="go" id="spOk" type="button">✅ 完成</button>
+            </div>
+        </div>
+    </div>
 
     <div class="toast" id="toast"></div>
 
@@ -1606,6 +1629,95 @@ function drawLogoText(ctx, canvas, effectiveScale) {
         XLSX.utils.book_append_sheet(wb,ws,'销售明细');
         XLSX.writeFile(wb,`${parseInt(m)}月份南香销售明细表.xlsx`);
         toast('✅ Excel 已导出','ok');
+    });
+
+    /* ========================================================
+     * 实销照片导入：多选 → 逐张弹窗（选店+金额）→ 照片进店 + 自动÷0.98记账
+     * ====================================================== */
+    let spQueue = [];           // [{full, thumb, name}]
+    let spLast = null;          // {store, amount} 沿用上一张
+    let spBusy = false;
+    $('#salePhotoBtn').addEventListener('click', ()=>$('#salePhotoInput').click());
+    $('#salePhotoInput').addEventListener('change', async e=>{
+        const fs=Array.from(e.target.files).filter(f=>f.type&&f.type.startsWith('image/'));
+        e.target.value='';
+        if(!fs.length){ toast('没有图片文件','err'); return; }
+        if(spBusy){ toast('正在处理中，稍等','err'); return; }
+        spBusy=true;
+        const btn=$('#salePhotoBtn'); const old=btn.textContent; btn.disabled=true;
+        spQueue=[];
+        try{
+            for(let i=0;i<fs.length;i++){
+                btn.textContent=`⏳ 读取 ${i+1}/${fs.length}…`;
+                try{
+                    const bmp=await decodeBitmap(fs[i], 1600);
+                    const sc=Math.min(1, 1600/Math.max(bmp.width,bmp.height));
+                    const w=Math.round(bmp.width*sc), h=Math.round(bmp.height*sc);
+                    const c=document.createElement('canvas'); c.width=w; c.height=h;
+                    c.getContext('2d').drawImage(bmp,0,0,w,h);
+                    if(bmp.close) bmp.close();
+                    const full=await canvasToDataURL(c, 0.78);
+                    if(!full) continue;
+                    const tc=document.createElement('canvas');
+                    const tsc=Math.min(1, 400/Math.max(w,h));
+                    tc.width=Math.round(w*tsc); tc.height=Math.round(h*tsc);
+                    tc.getContext('2d').drawImage(c,0,0,tc.width,tc.height);
+                    const thumb=await canvasToDataURL(tc, 0.7);
+                    spQueue.push({ full, thumb:thumb||full, name:(fs[i].name||'photo').replace(/\.[^.]+$/,'')+'.jpg' });
+                }catch(err){ /* 单张失败跳过 */ }
+            }
+            if(!spQueue.length){ toast('照片全部读取失败','err'); return; }
+            spShowOne();
+        }finally{
+            spBusy=false; btn.disabled=false; btn.textContent=old;
+        }
+    });
+    function spShowOne(){
+        const it=spQueue[0];
+        $('#spImg').src=it.full;
+        $('#spProgress').textContent=`（还剩 ${spQueue.length} 张）`;
+        const sel=$('#spStore');
+        const prev=spLast?spLast.store:'';
+        sel.innerHTML=STORES_META.map(m=>`<option value="${esc(m.name)}">${esc(m.name)}</option>`).join('');
+        if(prev && [...sel.options].some(o=>o.value===prev)) sel.value=prev;
+        $('#spAmount').value=spLast?spLast.amount:'';
+        $('#spHint').textContent='÷0.98 = —';
+        $('#salePhotoModal').classList.add('open');
+    }
+    $('#spAmount').addEventListener('input', e=>{
+        const v=parseFloat(e.target.value);
+        $('#spHint').textContent=(isNaN(v)||v<0)?'÷0.98 = —':`÷0.98 = ${(Math.round(v/0.98*100)/100).toFixed(2)} 元`;
+    });
+    function spNext(){
+        spQueue.shift();
+        if(spQueue.length){ spShowOne(); return; }
+        $('#salePhotoModal').classList.remove('open');
+    }
+    $('#spSkip').addEventListener('click', ()=>{ spNext(); if(!spQueue.length) toast('已跳过，全部处理完','ok'); });
+    $('#spOk').addEventListener('click', ()=>{
+        const it=spQueue[0]; if(!it) return;
+        const store=$('#spStore').value;
+        const amtStr=$('#spAmount').value;
+        if(!store){ toast('请选门店','err'); return; }
+        if(amtStr===''){ toast('请填金额','err'); $('#spAmount').focus(); return; }
+        const raw=parseFloat(amtStr);
+        if(isNaN(raw)||raw<0){ toast('金额无效','err'); return; }
+        const conv=Math.round(raw/0.98*100)/100;
+        const month=$('#saleMonth').value || curMonth;
+        // ① 照片进店（原图直传照片墙尾部）
+        let s=mdData.stores.find(x=>clean(x.store)===clean(store));
+        if(!s){ s={ id:mdUid++, store, photos:[] }; mdData.stores.push(s); }
+        if(!Array.isArray(s.photos)) s.photos=[s.door,s.second].filter(Boolean);
+        s.photos.push({ thumb:it.thumb, full:it.full, name:it.name });
+        renderList('stores'); updateCount('stores'); updateBadge();
+        // ② 自动÷0.98记账（月份=记账面板当前选的）
+        salesData.push({ id:Date.now().toString(36)+Math.random().toString(16).slice(2,6), month, storeName:store, originalAmount:raw, salesAmount:conv, remark:'实销照片', createdAt:new Date().toISOString() });
+        renderSales();
+        scheduleSave();
+        spLast={ store, amount:amtStr };
+        spNext();
+        if(!spQueue.length) toast(`✅「${store}」照片已进店 + 记账 ${conv.toFixed(2)} 元（${raw}÷0.98），全部完成`,'ok');
+        else toast(`✅「${store}」已处理，下一张`,'ok');
     });
 
     /* ========================================================
