@@ -564,10 +564,7 @@
     <!-- ============ 整理面板（licheng 复刻） ============ -->
     <section id="md-panel" class="main-panel">
         <div class="topbar">
-            <div class="row2">
-                <div class="f"><label>业务员名字</label><input id="nameInput" type="text" placeholder="张三" maxlength="40"></div>
-                <div class="f"><label>打包日期</label><input id="dateInput" type="date"></div>
-            </div>
+            <div class="f"><label>压缩包名称</label><input id="nameInput" type="text" placeholder="如：10月5日巡店照片" maxlength="40"></div>
             <div class="row2">
                 <button class="reset" id="mdResetBtn" type="button">🗑️ 重置</button>
                 <button class="export" id="exportBtn" type="button">📦 打包</button>
@@ -888,7 +885,7 @@ function drawLogoText(ctx, canvas, effectiveScale) {
     let salesData = [];
     let curMonth = '';
 
-    const nameInput = $('#nameInput'), dateInput = $('#dateInput');
+    const nameInput = $('#nameInput');
     const toastEl = $('#toast'), exportBtn = $('#exportBtn');
 
     function esc(s){ return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
@@ -898,7 +895,6 @@ function drawLogoText(ctx, canvas, effectiveScale) {
     function readAsDataURL(blob){ return new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=rej; r.readAsDataURL(blob); }); }
     const thumbOf = p => p ? (p.thumb||p.data||'') : '';
     const fullOf  = p => p ? (p.full||p.data||'') : '';
-    function setToday(){ const d=new Date(); dateInput.value=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
     function wmFmtDate(v){ const [y,m,d]=v.split('-').map(Number); const w='日一二三四五六'[new Date(y,m-1,d).getDay()]; return `${y}.${String(m).padStart(2,'0')}.${String(d).padStart(2,'0')} 星期${w}`; }
     function nowHM(){ const d=new Date(); return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`; }
     function addMinutes(hm, m){ const [h,mm]=hm.split(':').map(Number); const t=h*60+mm+m; return `${String(Math.floor(t/60)%24).padStart(2,'0')}:${String(t%60).padStart(2,'0')}`; }
@@ -1288,7 +1284,7 @@ function drawLogoText(ctx, canvas, effectiveScale) {
     function openStoreModal(){
         renderAddrChips();
         $('#smTime').value = lastMeta ? lastMeta.time : nowHM();
-        $('#smDate').value = lastMeta ? lastMeta.date : (dateInput.value || new Date().toISOString().slice(0,10));
+        $('#smDate').value = lastMeta ? lastMeta.date : new Date().toISOString().slice(0,10);
         $('#smPair').innerHTML = batch.map(it=>`<img src="${it.thumb}" alt="">`).join('');
         $('#smProgress').textContent = `（共 ${batch.length} 张）`;
         // 店名下拉：每次打开按门店管理名单刷新，默认沿用上一家
@@ -1661,15 +1657,13 @@ function drawLogoText(ctx, canvas, effectiveScale) {
     });
 
 
-    function fmtDate(v){ const [y,m,d]=v.split('-').map(Number); return `${y}年${m}月${d}日`; }
     function dataUrlToBlob(d){ const [h,b]=d.split(','); const mime=(h.match(/:(.*?);/)||[,'image/jpeg'])[1]; const bin=atob(b); const a=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++)a[i]=bin.charCodeAt(i); return new Blob([a],{type:mime}); }
 
     // 打包：只打包有照片的门店，每家店一个文件夹，照片按顺序 1.jpg 2.jpg…
     exportBtn.addEventListener('click', ()=> doExport());
     async function doExport(){
         const name=nameInput.value.trim();
-        if(!name){ toast('请先填名字','err'); nameInput.focus(); return; }
-        if(!dateInput.value){ toast('请选日期','err'); return; }
+        if(!name){ toast('请先填压缩包名称','err'); nameInput.focus(); return; }
         const packAll = mdData.stores.map(s=>{
             const photos = Array.isArray(s.photos) ? s.photos : [s.door,s.second].filter(Boolean);
             return { store:s.store, photos };
@@ -1694,7 +1688,7 @@ function drawLogoText(ctx, canvas, effectiveScale) {
                 exportBtn.textContent=`📦 ${Math.round((k+1)/items.length*100)}%`;
             }
             const out=await zip.generateAsync({type:'blob'});
-            const zipName=`南香巡店-${name}-${fmtDate(dateInput.value)}.zip`;
+            const zipName=`${name}.zip`;
             offerDownload(out, zipName);
             toast('✅ '+zipName+'（没保存出来就点面板里的按钮）','ok');
         }catch(err){ toast('打包失败：'+(err.message||err),'err'); }
@@ -2021,7 +2015,6 @@ function drawLogoText(ctx, canvas, effectiveScale) {
         mdData.stores = STORES_META.map(m=>({ id:mdUid++, store:m.name, photos:[] }));
     }
     (function initNow(){
-        setToday();
         $('#wmNoteInput').value='力诚食品-泉州办-何非凡';
         renderAddrChips();
         seedStores();
