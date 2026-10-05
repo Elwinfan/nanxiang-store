@@ -286,13 +286,11 @@
         .add:active { background: #f1f5f9; }
 
         /* ==================== 底部目标进度条 ==================== */
-        .goalbar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; background: #fff; box-shadow: 0 -2px 12px rgba(0,0,0,.08); padding: 10px 14px calc(10px + env(safe-area-inset-bottom, 0px)); display: flex; gap: 16px; }
+        .goalbar { padding: 0; margin: -2px 2px 14px; display: flex; gap: 16px; }
         .goalbar .g { flex: 1; min-width: 0; }
-        .goalbar .gt-top { display: flex; justify-content: space-between; align-items: baseline; font-size: 12px; font-weight: 600; color: #334155; margin-bottom: 4px; }
-        .goalbar .gt-top .gnum { color: #64748b; font-weight: 700; }
-        .goalbar .gt-top .gnum.done { color: #16a34a; }
-        .goalbar .track { height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden; }
-        .goalbar .fill { height: 100%; width: 0%; background: linear-gradient(90deg, #2563eb, #16a34a); border-radius: 4px; transition: width .3s; }
+        .goalbar .gt-top { display: none; }
+        .goalbar .track { height: 8px; background: #e8ebf0; border-radius: 4px; overflow: hidden; }
+        .goalbar .fill { height: 100%; width: 0%; background: linear-gradient(90deg, #2563eb, #60a5fa); border-radius: 4px; transition: width .3s; }
         .goalbar .fill.done { background: #16a34a; }
 
         /* ==================== 打包选项弹窗（v1.4.0 同步 licheng.html） ==================== */
@@ -409,9 +407,7 @@
         .main-tabs .bk-btn { background: #f1f5f9; border-radius: 10px; }
         .main-panel.active { padding-bottom: 92px; }
         .topbar { top: 0; background: #f4f5f7; box-shadow: none; }
-        /* goalbar / lib-bar 让位底部tab */
-        .goalbar { bottom: calc(78px + env(safe-area-inset-bottom, 0px)); box-shadow: 0 -2px 12px rgba(15,23,42,.06); }
-        .goalbar .fill { background: linear-gradient(90deg, #2563eb, #60a5fa); }
+        /* lib-bar 让位底部tab（goalbar 已移入整理面板顶部） */
         .lib-bar { bottom: calc(78px + env(safe-area-inset-bottom, 0px)); border-radius: 14px 14px 0 0; }
         /* 标题与卡片 */
         .ptitle { font-size: 17px; font-weight: 800; color: #0b1220; }
@@ -444,10 +440,10 @@
 
     <!-- 顶部主标签 -->
     <nav class="main-tabs">
-        <button class="mtab active" id="mtab-lib" type="button">照片</button>
+        <button class="mtab active" id="mtab-sales" type="button">记账</button>
+        <button class="mtab" id="mtab-lib" type="button">照片</button>
         <button class="mtab" id="mtab-wm" type="button">水印</button>
         <button class="mtab" id="mtab-md" type="button">整理<span class="bdg" id="mdBadge">0</span></button>
-        <button class="mtab" id="mtab-sales" type="button">记账</button>
         <span class="bk-bar">
             <button class="bk-btn" id="bkSave" type="button" title="备份：导出全部数据（照片/门店/地址）">💾</button>
             <button class="bk-btn" id="bkLoad" type="button" title="恢复：从备份文件还原">↩️</button>
@@ -456,7 +452,7 @@
     </nav>
 
     <!-- ============ 照片库面板：多选导入·长期保存·送整理/送水印 ============ -->
-    <section id="lib-panel" class="main-panel active">
+    <section id="lib-panel" class="main-panel">
         <div class="lib-wrap">
             <div class="phead">
                 <div class="phead-t">📷 照片库</div>
@@ -578,6 +574,12 @@
                     <div class="phead-t">🗂️ 门店整理</div>
                     <div class="phead-s" id="mdStat">—</div>
                 </div>
+                <div class="goalbar" id="goalBar">
+                    <div class="g">
+                        <div class="gt-top"><span>🏪 已整理门店</span><span class="gnum" id="goal-stores">0/17家</span></div>
+                        <div class="track"><div class="fill" id="fill-stores"></div></div>
+                    </div>
+                </div>
                 <div class="list" id="stores-list" data-tab="stores"></div>
                 <button class="add" id="add-stores" type="button">＋ 添加门店</button>
             </section>
@@ -585,7 +587,7 @@
     </section>
 
     <!-- ============ 账目面板（南香v3 搬运：÷0.98换算 + 同店累加 + 导Excel） ============ -->
-    <section id="sales-panel" class="main-panel">
+    <section id="sales-panel" class="main-panel active">
         <div class="sale-wrap">
             <div class="phead">
                 <div class="phead-t">💰 账目登记</div>
@@ -634,13 +636,7 @@
 
 
 
-    <!-- 底部目标进度条（仅整理标签显示） -->
-    <div class="goalbar" id="goalBar" style="display:none">
-        <div class="g">
-            <div class="gt-top"><span>🏪 已整理门店</span><span class="gnum" id="goal-stores">0/17家</span></div>
-            <div class="track"><div class="fill" id="fill-stores"></div></div>
-        </div>
-    </div>
+    <!-- 底部目标进度条已移入整理面板顶部（v10） -->
 
 
         <!-- 预览大图 -->
@@ -912,15 +908,14 @@ function drawLogoText(ctx, canvas, effectiveScale) {
     /* ========================================================
      * 主标签切换（照片库 / 水印 / 整理 / 记账 / 门店）
      * ====================================================== */
-    let curMain = 'lib';
-    const MAIN_TABS = ['lib','wm','md','sales'];
+    let curMain = 'sales';
+    const MAIN_TABS = ['sales','lib','wm','md'];
     function switchMainTab(m){
         curMain = m;
         MAIN_TABS.forEach(k=>{
             $('#mtab-'+k).classList.toggle('active', m===k);
             document.getElementById(k+'-panel').classList.toggle('active', m===k);
         });
-        $('#goalBar').style.display = m==='md' ? 'flex' : 'none';
         window.scrollTo({top:0});
     }
     MAIN_TABS.forEach(k=> $('#mtab-'+k).addEventListener('click', ()=>switchMainTab(k)) );
