@@ -315,7 +315,7 @@
         .toast.ok { background: rgba(22,163,74,.95); }
 
         /* ==================== 账目面板（南香） ==================== */
-        .sale-wrap, .set-wrap { max-width: 640px; margin: 0 auto; padding: 14px 12px 90px; }
+        .sale-wrap { max-width: 640px; margin: 0 auto; padding: 14px 12px 90px; }
         .sale-wrap .row2 { display: flex; gap: 10px; }
         .sale-wrap .f { flex: 1; display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
         .sale-wrap label { font-size: 13px; color: #475569; font-weight: 600; }
@@ -334,18 +334,6 @@
         .sr-del { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); border: none; background: #fee2e2; color: #dc2626; border-radius: 8px; padding: 7px 9px; font-size: 12px; cursor: pointer; }
 
         /* ==================== 门店管理面板 ==================== */
-        .set-wrap .set-btns { display: flex; gap: 10px; margin: 12px 0 4px; }
-        .set-wrap .set-btns button { flex: 1; padding: 13px; border: none; border-radius: 12px; font-size: 15px; font-weight: 600; cursor: pointer; }
-        #metaAdd { background: linear-gradient(135deg, #2563eb, #3b82f6); color: #fff; }
-        #metaReset { background: #f1f5f9; color: #64748b; }
-        #metaList { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; }
-        .meta-row { background: #fff; border: 1.5px solid #e2e8f0; border-radius: 12px; padding: 10px 12px; }
-        .mr-line1 { display: flex; gap: 8px; margin-bottom: 8px; align-items: center; }
-        .mr-line1 .nm-name { flex: 1; font-weight: 700; font-size: 15px; }
-        .mr-del { border: none; background: #fee2e2; color: #dc2626; border-radius: 8px; padding: 6px 10px; cursor: pointer; font-size: 13px; flex-shrink: 0; }
-        .mr-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
-        .mf { padding: 9px 10px; border: 1.5px solid #e2e8f0; border-radius: 8px; font-size: 13px; box-sizing: border-box; width: 100%; }
-        .set-tip { font-size: 12px; color: #94a3b8; text-align: center; margin-top: 14px; }
 
         /* ==================== 多照片模式（v2）：门店信息框N张横滑 + 店卡照片墙 ==================== */
         .seq-pair { display: flex; gap: 6px; overflow-x: auto; padding: 4px 2px 8px; -webkit-overflow-scrolling: touch; }
@@ -413,7 +401,6 @@
         <button class="mtab" id="mtab-wm" type="button">🖊️ 水印</button>
         <button class="mtab" id="mtab-md" type="button">🗂️ 整理<span class="bdg" id="mdBadge">0</span></button>
         <button class="mtab" id="mtab-sales" type="button">💰 记账</button>
-        <button class="mtab" id="mtab-set" type="button">⚙️ 门店</button>
         <span class="bk-bar">
             <button class="bk-btn" id="bkSave" type="button" title="备份：导出全部数据（照片/门店/地址）">💾</button>
             <button class="bk-btn" id="bkLoad" type="button" title="恢复：从备份文件还原">↩️</button>
@@ -563,19 +550,6 @@
             </div>
             <div class="sale-sum" id="saleSum"></div>
             <div class="sale-listwrap"><div class="sale-list" id="saleList"></div></div>
-        </div>
-    </section>
-
-    <!-- ============ 门店管理面板（增删改，联动整理/记账） ============ -->
-    <section id="set-panel" class="main-panel">
-        <div class="set-wrap">
-            <div class="ptitle">⚙️ 门店管理 — 改名单会同步整理列表和记账下拉</div>
-            <div class="row2 set-btns">
-                <button id="metaAdd" type="button">＋ 添加门店</button>
-                <button id="metaReset" type="button">↩️ 恢复默认17家</button>
-            </div>
-            <div id="metaList"></div>
-            <div class="set-tip">💾 / ↩️ 备份恢复在页面顶部，备份内容含照片 + 账目 + 门店名单 + 地址历史</div>
         </div>
     </section>
 
@@ -863,7 +837,7 @@ function drawLogoText(ctx, canvas, effectiveScale) {
      * 主标签切换（照片库 / 水印 / 整理 / 记账 / 门店）
      * ====================================================== */
     let curMain = 'lib';
-    const MAIN_TABS = ['lib','wm','md','sales','set'];
+    const MAIN_TABS = ['lib','wm','md','sales'];
     function switchMainTab(m){
         curMain = m;
         MAIN_TABS.forEach(k=>{
@@ -1645,67 +1619,6 @@ function drawLogoText(ctx, canvas, effectiveScale) {
         const names=new Set(STORES_META.map(m=>clean(m.name)));
         mdData.stores=mdData.stores.filter(s=>(s.photos&&s.photos.length)||s.door||s.second||names.has(clean(s.store)));
     }
-    function renderMeta(){
-        $('#metaList').innerHTML=STORES_META.map((m,i)=>`
-            <div class="meta-row" data-i="${i}" data-old="${esc(m.name)}">
-                <div class="mr-line1">
-                    <input class="mf nm-name" value="${esc(m.name)}" placeholder="门店名" maxlength="20">
-                    <button class="mr-del" type="button">✕</button>
-                </div>
-                <div class="mr-grid">
-                    <input class="mf nm-contact" value="${esc(m.contact||'')}" placeholder="联系人">
-                    <input class="mf nm-phone" value="${esc(m.phone||'')}" placeholder="电话">
-                    <input class="mf nm-display" value="${esc(m.display||'')}" placeholder="陈列方式">
-                    <input class="mf nm-quantity" value="${esc(m.quantity||'')}" placeholder="条码支数">
-                </div>
-                <input class="mf nm-address" value="${esc(m.address||'')}" placeholder="地址">
-            </div>`).join('');
-    }
-    let metaSaveTimer;
-    function metaChanged(){
-        renderStoreOptions($('#saleStore'));
-        renderList('stores'); updateCount('stores'); updateBadge();
-        clearTimeout(metaSaveTimer); metaSaveTimer=setTimeout(scheduleSave, 300);
-    }
-    $('#metaAdd').addEventListener('click', ()=>{
-        STORES_META.push({ name:'新门店'+(STORES_META.length+1), contact:'', phone:'', address:'', display:'', quantity:'' });
-        syncStoreCards(); renderMeta(); metaChanged();
-        const rows=document.querySelectorAll('.meta-row'); const last=rows[rows.length-1];
-        if(last){ last.scrollIntoView({behavior:'smooth',block:'center'}); last.querySelector('.nm-name').focus(); last.querySelector('.nm-name').select(); }
-    });
-    $('#metaReset').addEventListener('click', ()=>{
-        if(!confirm('恢复默认 17 家门店名单？\n\n你改名/新增的门店信息会还原，照片和账目不动。')) return;
-        STORES_META=JSON.parse(JSON.stringify(DEFAULT_STORES_META));
-        syncStoreCards(); renderMeta(); metaChanged();
-        toast('已恢复默认 17 家','ok');
-    });
-    $('#metaList').addEventListener('click', e=>{
-        const btn=e.target.closest('.mr-del'); if(!btn) return;
-        const row=btn.closest('.meta-row'); const i=+row.dataset.i;
-        const m=STORES_META[i]; if(!m) return;
-        const card=mdData.stores.find(s=>clean(s.store)===clean(m.name));
-        const hasPhoto=card&&(card.door||card.second);
-        if(!confirm(`删除「${m.name}」？${hasPhoto?'\n\n⚠️ 这家店有照片，会一起删掉！':''}`)) return;
-        STORES_META.splice(i,1);
-        if(card) mdData.stores=mdData.stores.filter(s=>s!==card);
-        renderMeta(); metaChanged();
-        toast('已删除「'+m.name+'」','ok');
-    });
-    $('#metaList').addEventListener('input', e=>{
-        const inp=e.target.closest('.mf'); if(!inp) return;
-        const row=inp.closest('.meta-row'); const i=+row.dataset.i;
-        const m=STORES_META[i]; if(!m) return;
-        const field={ 'nm-name':'name','nm-contact':'contact','nm-phone':'phone','nm-display':'display','nm-quantity':'quantity','nm-address':'address' }[inp.classList[1]];
-        if(!field) return;
-        const oldName=row.dataset.old;
-        m[field]=inp.value;
-        if(field==='name'){
-            const card=mdData.stores.find(s=>clean(s.store)===clean(oldName));
-            if(card){ card.store=inp.value; }
-            row.dataset.old=inp.value;
-        }
-        metaChanged();
-    });
 
     // IndexedDB 持久化（新库 nanxiangzip1）
     let _db;
@@ -1825,7 +1738,6 @@ function drawLogoText(ctx, canvas, effectiveScale) {
         updateCount('stores');
         updateBadge();
         initSales();
-        renderMeta();
         libLoad();
     })();
     (async ()=>{
@@ -1842,7 +1754,7 @@ function drawLogoText(ctx, canvas, effectiveScale) {
             syncStoreCards();
             mdData.stores.forEach(migratePhotos);
             renderStoreOptions($('#saleStore'));
-            renderSales(); renderMeta();
+            renderSales();
             renderList('stores'); updateCount('stores'); updateBadge();
         }catch(e){}
     })();
