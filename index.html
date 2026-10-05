@@ -148,7 +148,7 @@
         .seq-pair img { width: 50%; height: 86px; object-fit: cover; border-radius: 8px; border: 1px solid #e2e8f0; }
         .seq-modal-card .f { margin-bottom: 10px; }
         .seq-modal-card .f label { display: block; font-size: 13px; font-weight: 700; color: #475569; margin-bottom: 4px; }
-        .seq-modal-card input[type="text"], .seq-modal-card input[type="time"], .seq-modal-card input[type="date"] { width: 100%; box-sizing: border-box; padding: 10px 12px; border: 1.5px solid #e2e8f0; border-radius: 10px; font-size: 16px; background: #fff; }
+        .seq-modal-card input[type="text"], .seq-modal-card input[type="time"], .seq-modal-card input[type="date"], .seq-modal-card input[type="number"] { width: 100%; box-sizing: border-box; padding: 13px 14px; border: 1.5px solid #e2e8f0; border-radius: 10px; font-size: 17px; min-height: 50px; background: #fff; }
         .seq-modal-card input:focus { outline: none; border-color: #2563eb; }
         .seq-modal-card .row { display: flex; gap: 10px; }
         .seq-modal-card .row .f { flex: 1; }
@@ -190,7 +190,7 @@
         .wm-wrap { max-width: 760px; margin: 0 auto; padding: 12px 12px 200px; }
         .wm-note { background: #fff; border: 1px solid #e2e8f0; border-radius: 11px; padding: 10px 12px; margin-bottom: 10px; box-shadow: 0 1px 4px rgba(0,0,0,.04); }
         .wm-note label { display: block; font-size: 11px; color: #64748b; margin-bottom: 4px; font-weight: 600; }
-        .wm-note input { width: 100%; padding: 8px 9px; border: 2px solid #e2e8f0; border-radius: 7px; font-size: 14px; min-height: 38px; }
+        .wm-note input { width: 100%; box-sizing: border-box; padding: 10px 12px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 16px; min-height: 44px; }
         .wm-note input:focus { outline: none; border-color: #2563eb; }
 
         .wm-drop { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 22px; border: 2px dashed #94a3b8; border-radius: 12px; background: #fff; color: #475569; font-size: 14px; font-weight: 600; cursor: pointer; margin-bottom: 10px; text-align: center; }
@@ -264,7 +264,7 @@
         .num { width: 26px; height: 26px; border-radius: 50%; background: #2563eb; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 12px; flex: none; }
         .num::before { content: counter(it); }
         .block-gt .num { background: #16a34a; }
-        .nm { flex: 1; padding: 8px 10px; border: 2px solid #e2e8f0; border-radius: 7px; font-size: 15px; min-height: 38px; min-width: 0; }
+        .nm { flex: 1; padding: 8px 10px; border: 2px solid #e2e8f0; border-radius: 7px; font-size: 16px; min-height: 42px; min-width: 0; }
         .nm:focus { outline: none; border-color: #2563eb; }
         .del { padding: 7px 10px; background: #fef2f2; color: #dc2626; border: none; border-radius: 7px; font-size: 12px; font-weight: 600; cursor: pointer; }
 
@@ -381,16 +381,20 @@
         .lb-btn.wm { background: linear-gradient(135deg, #2563eb, #3b82f6); }
         .lb-btn.del { background: #dc2626; }
         .lb-btn.off { background: rgba(255,255,255,.16); }
-        .lib-modal { position: fixed; inset: 0; background: rgba(15,23,42,.55); display: none; align-items: center; justify-content: center; z-index: 9500; padding: 20px; }
-        .lib-modal.open { display: flex; }
-        .lib-modal-card { background: #fff; border-radius: 16px; padding: 20px; width: 100%; max-width: 340px; }
+        .lib-modal { position: fixed; inset: 0; background: rgba(15,23,42,.55); display: none; z-index: 9500; overflow-y: auto; padding: 5vh 16px 45vh; }
+        .lib-modal.open { display: block; }
+        .lib-modal-card { background: #fff; border-radius: 16px; padding: 20px 18px; width: 100%; max-width: 400px; margin: 0 auto; box-shadow: 0 20px 60px rgba(0,0,0,.25); }
+        .lib-modal-card .f { margin-bottom: 14px; }
+        .lib-modal-card .f label { display: block; font-size: 14px; font-weight: 700; color: #475569; margin-bottom: 5px; }
+        .lib-modal-card input, .lib-modal-card select { width: 100%; box-sizing: border-box; padding: 13px 14px; border: 1.5px solid #e2e8f0; border-radius: 10px; font-size: 17px; min-height: 50px; background: #fff; }
+        .lib-modal-card input:focus, .lib-modal-card select:focus { outline: none; border-color: #2563eb; }
         .lib-modal-title { font-size: 16px; font-weight: 700; color: #0f172a; margin-bottom: 14px; }
-        .lib-sel { width: 100%; padding: 12px; border: 1.5px solid #e2e8f0; border-radius: 10px; font-size: 15px; margin-bottom: 16px; }
+        .lib-sel { width: 100%; box-sizing: border-box; padding: 13px 14px; border: 1.5px solid #e2e8f0; border-radius: 10px; font-size: 17px; min-height: 50px; background: #fff; appearance: none; -webkit-appearance: none; margin-bottom: 16px; }
         .lib-modal-actions { display: flex; gap: 10px; }
         .lib-modal-actions button { flex: 1; padding: 13px; border: none; border-radius: 11px; font-size: 15px; font-weight: 600; cursor: pointer; }
         .lib-modal-actions .go { background: linear-gradient(135deg, #16a34a, #22c55e); color: #fff; }
         .lib-modal-actions .clr { background: #f1f5f9; color: #64748b; }
-        .sm-sel { width: 100%; padding: 12px; border: 1.5px solid #e2e8f0; border-radius: 10px; font-size: 16px; background: #fff; appearance: none; -webkit-appearance: none; }
+        .sm-sel { width: 100%; box-sizing: border-box; padding: 13px 14px; border: 1.5px solid #e2e8f0; border-radius: 10px; font-size: 17px; min-height: 50px; background: #fff; appearance: none; -webkit-appearance: none; }
         .dl-info { font-size: 13px; color: #475569; background: #f8fafc; border-radius: 10px; padding: 10px 12px; margin-bottom: 14px; word-break: break-all; line-height: 1.6; }
         .dl-go { display: block; width: 100%; padding: 16px; border: none; border-radius: 12px; font-size: 17px; font-weight: 700; cursor: pointer; color: #fff; background: linear-gradient(135deg, #16a34a, #22c55e); margin-bottom: 12px; }
         .dl-go:active { transform: scale(.98); }
@@ -483,10 +487,8 @@
                     <input id="smAddr" type="text" maxlength="60" placeholder="泉州市·沃尔玛" autocomplete="off">
                     <div class="addr-chips" id="smAddrChips"></div>
                 </div>
-                <div class="row">
-                    <div class="f sm"><label>第1张时间 *</label><input id="smTime" type="time"></div>
-                    <div class="f sm"><label>日期 *</label><input id="smDate" type="date"></div>
-                </div>
+                <div class="f"><label>第1张时间 *</label><input id="smTime" type="time"></div>
+                <div class="f"><label>日期 *</label><input id="smDate" type="date"></div>
                 <div class="row"><small class="seq-tip">后面每张的时间自动顺延几分钟（巡店真实节奏）</small></div>
 
                 <div class="seq-modal-actions">
