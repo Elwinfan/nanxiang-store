@@ -433,6 +433,11 @@
         .lib-modal-card, .seq-modal-card { border-radius: 20px; box-shadow: 0 24px 64px rgba(15,23,42,.28); }
         .sale-sum { background: #eff6ff; border-color: #dbeafe; color: #1e40af; }
         .lib-empty { color: #a3adb8; }
+        /* 面板标题区：大标题 + 实时数据小字（v8 文字优化） */
+        .phead { margin: 16px 2px 12px; }
+        .phead-t { font-size: 21px; font-weight: 800; color: #0b1220; letter-spacing: -.01em; line-height: 1.25; }
+        .phead-s { font-size: 13px; color: #7c8aa0; margin-top: 3px; font-weight: 500; }
+        .mini-hint { font-size: 12px; color: #a3adb8; margin: -6px 2px 14px; }
     </style>
 </head>
 <body>
@@ -453,8 +458,12 @@
     <!-- ============ 照片库面板：多选导入·长期保存·送整理/送水印 ============ -->
     <section id="lib-panel" class="main-panel active">
         <div class="lib-wrap">
-            <div class="ptitle">照片 — 素材池：导入长期保存，勾选后送整理（不加水印）或送水印（加工）</div>
-            <button class="lib-import" id="libImportBtn" type="button">➕ 导入照片（可多选，自动压缩）</button>
+            <div class="phead">
+                <div class="phead-t">📷 照片库</div>
+                <div class="phead-s" id="libStat">还没有照片，导入后长期保存</div>
+            </div>
+            <button class="lib-import" id="libImportBtn" type="button">➕ 导入照片</button>
+            <div class="mini-hint">导入自动压缩 · 勾选后可送整理（不加水印）或送水印</div>
             <input type="file" id="libFileInput" accept="image/*" multiple hidden>
             <div id="libList"></div>
             <div class="lib-empty" id="libEmpty">库里还没照片，点上面 ➕ 导入<br><small>照片自动压缩到长边1600px，看清又不占地方；💾备份含照片库</small></div>
@@ -497,13 +506,17 @@
     <!-- ============ 水印面板（v2 多照片：N张一店） ============ -->
     <section id="wm-panel" class="main-panel">
         <div class="wm-wrap">
+            <div class="phead">
+                <div class="phead-t">🖊️ 水印加工</div>
+                <div class="phead-s" id="wmStat">—</div>
+            </div>
             <div class="wm-note">
                 <label>水印备注行（全局，所有照片共用）</label>
                 <input id="wmNoteInput" type="text" maxlength="50" placeholder="力诚食品-泉州办-何非凡">
             </div>
 
             <div class="seq-status">
-                <div class="seq-hint" id="seqHint">选这家店的所有照片（门头/实销/卸货/陈列…可多选）→ 确认顺序 → 填店名一次入库</div>
+                <div class="seq-hint" id="seqHint">选这家店的照片（可多选）→ 确认顺序 → 一次入库</div>
                 <div class="seq-actions">
                     <button class="seq-add" id="seqAddBtn" type="button">➕ 加照片（可多选）</button>
                 </div>
@@ -516,17 +529,17 @@
             <div class="seq-modal-card">
                 <div class="seq-modal-title">🏪 填写门店信息 <span id="smProgress" style="font-size:13px;color:#2563eb;font-weight:600"></span></div>
                 <div class=seq-pair id=smPair></div>
-                <div class="f"><label>门店名 *（选名单里的店；新店去「⚙️门店」加）</label><select id="smStore" class="sm-sel"></select></div>
+                <div class="f"><label>门店名 *</label><select id="smStore" class="sm-sel"></select></div>
                 <div class="f"><label>地址（点下方可快速填入）*</label>
                     <input id="smAddr" type="text" maxlength="60" placeholder="泉州市·沃尔玛" autocomplete="off">
                     <div class="addr-chips" id="smAddrChips"></div>
                 </div>
                 <div class="f"><label>第1张时间 *</label><input id="smTime" type="time"></div>
                 <div class="f"><label>日期 *</label><input id="smDate" type="date"></div>
-                <div class="row"><small class="seq-tip">后面每张的时间自动顺延几分钟（巡店真实节奏）</small></div>
+                <div class="row"><small class="seq-tip">后续每张时间自动顺延几分钟</small></div>
 
                 <div class="seq-modal-actions">
-                    <button class="go" id="smOk" type="button">✅ 确认加水印（全部进这家店）</button>
+                    <button class="go" id="smOk" type="button">✅ 确认加水印</button>
                     <button class="clr" id="smCancel" type="button">全部撤掉重选</button>
                 </div>
             </div>
@@ -564,7 +577,10 @@
 
         <div class="panels">
             <section id="stores-panel" class="panel active">
-                <div class="ptitle">🏪 南香门店 — 每家：门头照 + 陈列照（没跑的店留空，打包自动跳过）</div>
+                <div class="phead">
+                    <div class="phead-t">🗂️ 门店整理</div>
+                    <div class="phead-s" id="mdStat">—</div>
+                </div>
                 <div class="list" id="stores-list" data-tab="stores"></div>
                 <button class="add" id="add-stores" type="button">＋ 添加门店</button>
             </section>
@@ -574,8 +590,12 @@
     <!-- ============ 账目面板（南香v3 搬运：÷0.98换算 + 同店累加 + 导Excel） ============ -->
     <section id="sales-panel" class="main-panel">
         <div class="sale-wrap">
-            <div class="ptitle">💰 账目登记 — 金额自动 ÷0.98 换算，同店多笔自动累加</div>
-            <button class="sale-photo-btn" id="salePhotoBtn" type="button">📷 导入实销照片（多选，逐张选店+填金额，自动进店+自动记账）</button>
+            <div class="phead">
+                <div class="phead-t">💰 账目登记</div>
+                <div class="phead-s" id="salesStat">—</div>
+            </div>
+            <button class="sale-photo-btn" id="salePhotoBtn" type="button">📷 导入实销照片</button>
+            <div class="mini-hint">逐张选店填金额 · 照片自动进店并 ÷0.98 记账</div>
             <input type="file" id="salePhotoInput" accept="image/*" multiple hidden>
             <div class="row2">
                 <div class="f"><label>月份</label><input id="saleMonth" type="month"></div>
@@ -934,6 +954,8 @@ function drawLogoText(ctx, canvas, effectiveScale) {
     }
 
     function libRender(){
+        const st=$('#libStat');
+        if(st) st.textContent = libPhotos.length ? `共 ${libPhotos.length} 张 · ${libBatches.length} 个批次` : '还没有照片，导入后长期保存';
         const listEl=$('#libList');
         const batches=[...libBatches].sort((a,b)=>String(b.at).localeCompare(String(a.at)));
         if(!batches.length || !libPhotos.length){
@@ -1398,6 +1420,11 @@ function drawLogoText(ctx, canvas, effectiveScale) {
     function updateCount(tab){
         const cEl=$('#cnt-'+tab); if(cEl) cEl.textContent=mdData[tab].length+'家';
         const n=mdData[tab].filter(s=>(s.photos&&s.photos.length)||s.door||s.second).length, goal=STORES_META.length, done=n>=goal;
+        // 标题区实时数据
+        const withPhotos=mdData[tab].filter(s=>(s.photos&&s.photos.length)||s.door||s.second);
+        const totalPhotos=mdData[tab].reduce((sum,s)=>sum+((s.photos&&s.photos.length)||((s.door||s.second)?1:0)),0);
+        const mdSt=$('#mdStat'); if(mdSt) mdSt.textContent=`已整理 ${n}/${goal} 家 · 共 ${totalPhotos} 张`;
+        const wmSt=$('#wmStat'); if(wmSt) wmSt.textContent=n?`覆盖 ${n} 家店 · ${totalPhotos} 张照片`:'还没有照片入库';
         const gnum=$('#goal-'+tab), fill=$('#fill-'+tab);
         if(!gnum||!fill){ updateBadge(); return; }
         gnum.textContent=Math.min(n,goal)+'/'+goal+'家'+(done?' ✅':'');
@@ -1713,6 +1740,11 @@ function drawLogoText(ctx, canvas, effectiveScale) {
         const sumRaw=list.reduce((s,r)=>s+(r.originalAmount||0),0);
         const sumConv=list.reduce((s,r)=>s+(r.salesAmount||0),0);
         const nStores=new Set(list.map(r=>r.storeName)).size;
+        const sSt=$('#salesStat');
+        if(sSt){
+            const mm=parseInt(curMonth.split('-')[1]);
+            sSt.textContent=list.length ? `${mm}月合计 ${Math.round(sumConv).toLocaleString()} 元 · ${list.length} 笔` : `${mm}月还没记账`;
+        }
         $('#saleSum').innerHTML=list.length
             ? `📌 ${curMonth}：<b>${list.length}</b> 笔 · <b>${nStores}</b> 家店<br>原始合计 <b>${Math.round(sumRaw*100)/100}</b> → ÷0.98 合计 <b>${Math.round(sumConv*100)/100}</b> 元`
             : `📌 ${curMonth}：还没记账`;
